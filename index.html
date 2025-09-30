@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invoice Flow — Sign In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-md p-8">
+    <h1 class="text-2xl font-semibold mb-4">Invoice Flow</h1>
+    <p class="text-sm text-gray-500 mb-6">Sign in to continue — Technician / Accountant / Manager</p>
+
+    <form id="signinForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Username or Email</label>
+        <input id="username" required type="text" class="mt-1 block w-full rounded-md border-gray-200 shadow-sm focus:ring focus:ring-indigo-200 p-2" placeholder="you@example.com">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Password</label>
+        <input id="password" required type="password" class="mt-1 block w-full rounded-md border-gray-200 shadow-sm p-2" placeholder="••••••">
+      </div>
+
+      <div class="flex items-center justify-between text-sm">
+        <label class="flex items-center gap-2">
+          <input id="remember" type="checkbox" class="h-4 w-4">
+          Remember me
+        </label>
+        <a href="#" class="text-indigo-600 hover:underline">Forgot password?</a>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Role</label>
+        <select id="role" class="mt-1 block w-full rounded-md border-gray-200 p-2">
+          <option>Technician</option>
+          <option>Accountant</option>
+          <option>Manager</option>
+        </select>
+      </div>
+
+      <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">Sign in</button>
+    </form>
+
+    <p id="error" class="mt-4 text-sm text-red-600 hidden"></p>
+  </div>
+
+  <script>
+    // Demo sign-in: redirects to role pages
+    document.getElementById('signinForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const role = document.getElementById('role').value;
+      // simple validation
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const err = document.getElementById('error');
+      if(!user || !pass){
+        err.textContent = 'Please enter username and password.';
+        err.classList.remove('hidden');
+        return;
+      }
+      err.classList.add('hidden');
+      // role-based redirect (demo)
+      if(role === 'Technician') location.href = 'technician-dashboard.html';
+      else if(role === 'Accountant') location.href = 'accountant-dashboard.html';
+      else location.href = 'manager-dashboard.html';
+    });
+  </script>
+</body>
+</html>

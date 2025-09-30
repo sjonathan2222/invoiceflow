@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Accountant — Review</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Accountant Portal — Pending Invoices</h2>
+      <a href="sign-in.html" class="text-sm text-gray-600 hover:underline">Sign out</a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6">
+    <div class="bg-white rounded-xl shadow p-4 mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="font-medium">Pending Invoices</h3>
+          <p class="text-sm text-gray-500">Review, approve, or reject submitted invoices</p>
+        </div>
+        <div>
+          <input id="search" placeholder="Search customer" class="p-2 rounded border-gray-200">
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-4">
+      <table class="w-full text-sm">
+        <thead class="text-left text-gray-600">
+          <tr>
+            <th class="py-2">#</th>
+            <th>Invoice ID</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th class="text-right">Total</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="pendingBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Approve/Reject modal (simple) -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
+    <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+      <h3 id="modalTitle" class="text-lg font-medium mb-2">Invoice Details</h3>
+      <div id="modalBody" class="text-sm text-gray-700 mb-4"></div>
+      <textarea id="rejectReason" class="w-full border-gray-200 p-2 rounded mb-3" placeholder="Reason for rejection (if rejecting)"></textarea>
+      <div class="flex justify-end gap-2">
+        <button id="closeModal" class="px-4 py-2 rounded border">Close</button>
+        <button id="rejectBtn" class="px-4 py-2 rounded bg-red-600 text-white">Reject</button>
+        <button id="approveBtn" class="px-4 py-2 rounded bg-green-600 text-white">Approve</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // load pending data from localStorage (populated by technician-create demo)
+    let pending = JSON.parse(localStorage.getItem('pendingInvoices') || '[]');
+
+    // populate demo if empty with a sample
+    if(pending.length === 0){
+      pending = [
+        {id:'INV-1001', customer:'Demo Shop', date:'2025-09-22', total:120.5, items:[{desc:'Service A',qty:1,price:120.5}], status:'Pending'},
+        {id:'INV-1002', customer:'ACME Co', date:'2025-09-24', total:560.00, items:[{desc:'Parts',qty:10,price:56}], status:'Pending'}
+      ];
+      localStorage.setItem('pendingInvoices', JSON.stringify(pending));
+    }
+
+    const body = document.getElementById('pendingBody');
+    function renderList(list){
+      body.innerHTML = '';
+      list.forEach((inv, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'border-t';
+        tr.innerHTML = `
+          <td class="py-3">${idx+1}</td>
+          <td>${inv.id}</td>
+          <td>${inv.customer}</td>
+          <td>${inv.date}</td>
+          <td><span class="text-yellow-600 font-medium">${inv.status}</span></td>
+          <td class="text-right font-semibold">${inv.total.toFixed(2)}</td>
+          <td class="text-right">
+            <button class="view px-2 py-1 rounded bg-gray-100">View</button>
+            <button class="edit px-2 py-1 rounded bg-indigo-600 text-white ml-2">Edit</button>
+          </td>
+        `;
+        body.appendChild(tr);
+
+        tr.querySelector('.view').addEventListener('click', ()=>openModal(inv));
+        tr.querySelector('.edit').addEventListener('click', ()=> {
+          // simple edit demo: change total
+          const newTotal = prompt('Edit total amount', inv.total);
+          if(newTotal !== null){
+            inv.total = parseFloat(newTotal) || inv.total;
+            savePending();
+            renderList(filtered());
+          }
+        });
+      });
+    }
+
+    function savePending(){ localStorage.setItem('pendingInvoices', JSON.stringify(pending)); }
+
+    // search
+    const search = document.getElementById('search');
+    function filtered(){ 
+      const q = search.value.trim().toLowerCase();
+      return pending.filter(p=>p.customer.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+    }
+    search.addEventListener('input', ()=> renderList(filtered()));
+
+    renderList(pending);
+
+    // modal handlers
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    const closeModal = document.getElementById('closeModal');
+    let currentInv = null;
+
+    function openModal(inv){
+      currentInv = inv;
+      modalTitle.textContent = `Invoice ${inv.id} — ${inv.customer}`;
+      modalBody.innerHTML = `
+        <p><strong>Date:</strong> ${inv.date}</p>
+        <p><strong>Total:</strong> ${inv.total.toFixed(2)}</p>
+        <h4 class="mt-3 font-medium">Items</h4>
+        <ul>${inv.items.map(it=>`<li>${it.desc} — ${it.qty} × ${it.price.toFixed(2)} = ${(it.qty*it.price).toFixed(2)}</li>`).join('')}</ul>
+      `;
+      document.getElementById('rejectReason').value = '';
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
+
+    approveBtn.addEventListener('click', ()=> {
+      if(!currentInv) return;
+      currentInv.status = 'Approved';
+      // move out of pending (demo) — here we just update status and store
+      savePending();
+      alert('Invoice approved (demo).');
+      modal.classList.add('hidden'); renderList(filtered());
+    });
+
+    rejectBtn.addEventListener('click', ()=> {
+      if(!currentInv) return;
+      const reason = document.getElementById('rejectReason').value.trim();
+      currentInv.status = 'Rejected';
+      currentInv.rejectReason = reason;
+      savePending();
+      alert('Invoice rejected (demo).');
+      modal.classList.add('hidden'); renderList(filtered());
+    });
+
+    closeModal.addEventListener('click', ()=> {
+      modal.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

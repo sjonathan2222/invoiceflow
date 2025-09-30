@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Technician — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Technician Dashboard</h2>
+      <div class="flex gap-3 items-center">
+        <a href="sign-in.html" class="text-sm text-gray-600 hover:underline">Sign out</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <section class="lg:col-span-2 space-y-4">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-medium">Quick Stats</h3>
+          <p class="text-sm text-gray-500">Overview of your invoices</p>
+        </div>
+        <div>
+          <a href="technician-create.html" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Create New Invoice</a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <p class="text-sm text-gray-500">Invoices Created</p>
+          <p id="stat-created" class="text-2xl font-semibold">12</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <p class="text-sm text-gray-500">Pending</p>
+          <p id="stat-pending" class="text-2xl font-semibold">3</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <p class="text-sm text-gray-500">Drafts</p>
+          <p id="stat-drafts" class="text-2xl font-semibold">1</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4">
+        <h4 class="font-medium mb-2">My Invoices</h4>
+        <table class="w-full text-sm">
+          <thead class="text-left text-gray-500">
+            <tr>
+              <th class="py-2">#</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceTable">
+            <!-- JS will populate -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="space-y-4">
+      <div class="bg-white rounded-xl shadow p-4">
+        <h4 class="font-medium">Notifications</h4>
+        <ul id="notes" class="text-sm text-gray-600 mt-2 space-y-2">
+          <li>No new notifications</li>
+        </ul>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4">
+        <h4 class="font-medium">Help</h4>
+        <p class="text-sm text-gray-600 mt-2">Create invoices and submit them for approval. Drafts can be edited later.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // Demo data
+    const invoices = [
+      {id: 'INV-001', customer:'Bob's Cafe', date:'2025-09-10', status:'Approved', total: 234.00},
+      {id: 'INV-002', customer:'Lanka Traders', date:'2025-09-14', status:'Pending', total: 120.50},
+      {id: 'INV-003', customer:'SeaFoods Ltd', date:'2025-09-21', status:'Pending', total: 560.00},
+      {id: 'INV-004', customer:'Home Supplies', date:'2025-09-25', status:'Draft', total: 45.00}
+    ];
+
+    // populate table
+    const tbody = document.getElementById('invoiceTable');
+    invoices.forEach((inv, i) => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-t';
+      tr.innerHTML = `
+        <td class="py-3">${i+1}</td>
+        <td>${inv.customer}</td>
+        <td>${inv.date}</td>
+        <td><span class="${inv.status==='Pending'?'text-yellow-600':inv.status==='Approved'?'text-green-600':'text-gray-600'} font-medium">${inv.status}</span></td>
+        <td class="text-right font-semibold">${inv.total.toFixed(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const stats = {
+      created: invoices.length,
+      pending: invoices.filter(i=>i.status==='Pending').length,
+      drafts: invoices.filter(i=>i.status==='Draft').length
+    };
+    document.getElementById('stat-created').textContent = stats.created;
+    document.getElementById('stat-pending').textContent = stats.pending;
+    document.getElementById('stat-drafts').textContent = stats.drafts;
+  </script>
+</body>
+</html>

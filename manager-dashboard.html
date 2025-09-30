@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manager — Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Manager Dashboard — Analytics</h2>
+      <a href="sign-in.html" class="text-sm text-gray-600 hover:underline">Sign out</a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6 space-y-6">
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-sm text-gray-500">Total Invoices</p>
+        <p id="totalInv" class="text-2xl font-semibold">0</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-sm text-gray-500">Approved</p>
+        <p id="totalApproved" class="text-2xl font-semibold">0</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <p class="text-sm text-gray-500">Revenue (Total)</p>
+        <p id="totalRevenue" class="text-2xl font-semibold">0.00</p>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+        <h4 class="font-medium mb-2">Revenue (Last 7 days)</h4>
+        <canvas id="revChart" height="120"></canvas>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <h4 class="font-medium mb-2">Approved vs Rejected</h4>
+        <canvas id="pieChart" height="200"></canvas>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow p-4">
+      <h4 class="font-medium mb-2">Top customers</h4>
+      <ol id="topCustomers" class="list-decimal pl-5 text-sm text-gray-700"></ol>
+    </section>
+  </main>
+
+  <script>
+    // gather invoices from localStorage demo (pending + approved)
+    const pending = JSON.parse(localStorage.getItem('pendingInvoices')||'[]');
+    // assume also some historic approved invoices for demo
+    const historic = [
+      {id:'INV-5001', customer:'BigMart', date:'2025-09-10', status:'Approved', total:450.50},
+      {id:'INV-5002', customer:'Alpha Foods', date:'2025-09-15', status:'Approved', total:780.00},
+      {id:'INV-5003', customer:'SeaFoods Ltd', date:'2025-09-18', status:'Rejected', total:120.00}
+    ];
+    const all = [...historic, ...pending];
+
+    const totalInv = all.length;
+    const approved = all.filter(i=>i.status==='Approved').length;
+    const revenue = all.filter(i=>i.status==='Approved').reduce((s,i)=>s+(i.total||0),0);
+
+    document.getElementById('totalInv').textContent = totalInv;
+    document.getElementById('totalApproved').textContent = approved;
+    document.getElementById('totalRevenue').textContent = revenue.toFixed(2);
+
+    // revenue chart demo (7 days sample)
+    const days = ['Day -6','-5','-4','-3','-2','-1','Today'];
+    const revData = [50, 120, 200, 150, 400, 80, revenue]; // sample values
+
+    new Chart(document.getElementById('revChart'), {
+      type: 'line',
+      data: { labels: days, datasets: [{ label: 'Revenue', data: revData, tension: 0.3, fill: true }]},
+      options: { responsive:true, plugins:{legend:{display:false}}}
+    });
+
+    // pie chart Approved vs Rejected
+    const approvedCount = all.filter(i=>i.status==='Approved').length;
+    const rejectedCount = all.filter(i=>i.status==='Rejected').length;
+    new Chart(document.getElementById('pieChart'), {
+      type: 'pie',
+      data: { labels:['Approved','Rejected','Pending'], datasets:[{ data:[approvedCount, rejectedCount, totalInv - approvedCount - rejectedCount ]}] },
+      options: {}
+    });
+
+    // top customers (simple aggregation)
+    const map = {};
+    all.forEach(i => {
+      const name = i.customer || 'Unknown';
+      map[name] = (map[name]||0) + (i.total||0);
+    });
+    const top = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const ol = document.getElementById('topCustomers');
+    top.forEach(([name,amt]) => {
+      const li = document.createElement('li');
+      li.textContent = `${name} — ${amt.toFixed(2)}`;
+      ol.appendChild(li);
+    });
+  </script>
+</body>
+</html>
